@@ -86,6 +86,12 @@ For a valid reading, age is `min(uint32(captured_ms - timestamp_ms), 65535)`.
 controller's responsibility. BLE preserves validity rather than applying another
 staleness policy to individual signals.
 
+A transient failed OBD query retains the last successful value with its original
+timestamp. A failed query never refreshes that sample's age. Never-received and
+explicitly unsupported signals remain invalid; consumers must still expire
+retained readings using their sample ages. All pedal D/E/F/relative channels now
+use a 250 ms minimum polling interval, subject to ECU response and scheduling.
+
 The record order is fixed by the following IDs, independent of the layout of
 C structs. Adding, removing, or changing records or units requires a new protocol
 version. A phone must reject unknown versions before interpreting the body.

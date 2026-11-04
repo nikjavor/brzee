@@ -34,8 +34,8 @@ static obd_pid_job_t pid_jobs[] = {
     JOB(OBD_SIGNAL_AMBIENT_TEMPERATURE, 5000, PID_PRIO_SLOW),
     JOB(OBD_SIGNAL_RELATIVE_THROTTLE_POSITION, 1000, PID_PRIO_MEDIUM),
     JOB(OBD_SIGNAL_THROTTLE_ACTUATOR, 1000, PID_PRIO_MEDIUM),
-    JOB(OBD_SIGNAL_PEDAL_POSITION_E, 1000, PID_PRIO_SLOW),
-    JOB(OBD_SIGNAL_PEDAL_POSITION_F, 1000, PID_PRIO_SLOW),
+    JOB(OBD_SIGNAL_PEDAL_POSITION_E, 250, PID_PRIO_FAST),
+    JOB(OBD_SIGNAL_PEDAL_POSITION_F, 250, PID_PRIO_FAST),
     JOB(OBD_SIGNAL_THROTTLE_POSITION_B, 1000, PID_PRIO_SLOW),
     JOB(OBD_SIGNAL_THROTTLE_POSITION_C, 1000, PID_PRIO_SLOW),
     JOB(OBD_SIGNAL_SHORT_FUEL_TRIM_BANK_1, 1000, PID_PRIO_MEDIUM),
@@ -111,9 +111,14 @@ static obd_pid_job_t *pick_next_job(uint32_t now_ms)
     if (!job->enabled || (int32_t)(now_ms - job->next_due_ms) < 0)
       continue;
 
-    // Service the oldest deadline so slow signals get a turn, too.
-    if (best == NULL || (int32_t)(job->next_due_ms - best->next_due_ms) < 0 ||
-        (job->next_due_ms == best->next_due_ms && job->priority < best->priority))
+    // An overdue auxiliary PID must not delay the inputs that drive sound.
+    // Keep oldest-deadline fairness inside the fast class and among auxiliaries.
+    bool fast = job->priority == PID_PRIO_FAST;
+    bool best_fast = best != NULL && best->priority == PID_PRIO_FAST;
+    if (best == NULL || (fast && !best_fast) ||
+        (fast == best_fast &&
+         ((int32_t)(job->next_due_ms - best->next_due_ms) < 0 ||
+          (job->next_due_ms == best->next_due_ms && job->priority < best->priority))))
       best = job;
   }
   return best;
@@ -218,12 +223,26 @@ static void scheduler_task(void *arg)
     }
     if (!res)
     {
-      car_data_invalidate(signal_data_ids[job->signal]);
+      // A failed request is not a new measurement. Retain any last successful
+      // value with its ORIGINAL timestamp; consumers still expire it by age.
+      // Unsupported and never-received signals remain invalid.
       if (job->fail_count < UINT8_MAX)
         job->fail_count++;
       ESP_LOGW(TAG, "%s query failed (fail_count=%u)",
                obd_signal_get_info(job->signal)->name, job->fail_count);
-      job->next_due_ms = now + job->period_ms + (job->fail_count * 50u);
+      car_value_t previous;
+      uint32_t retry_ms = job->period_ms;
+      if (!car_data_get_full(signal_data_ids[job->signal], &previous))
+      {
+        // A partial capability scan can leave unsupported PIDs unknown. Probe
+        // those less often instead of spending the live-input budget on them.
+        unsigned shift = job->fail_count < 6u ? job->fail_count : 6u;
+        retry_ms <<= shift;
+        uint32_t cap_ms = job->period_ms > 10000u ? job->period_ms : 10000u;
+        if (retry_ms > cap_ms)
+          retry_ms = cap_ms;
+      }
+      job->next_due_ms = now + retry_ms;
     }
 
     vTaskDelay(pdMS_TO_TICKS(10));
