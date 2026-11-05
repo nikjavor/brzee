@@ -9,7 +9,7 @@ brzee is real-time automotive system which gets live car data from OBD-II port u
 ### Motivation
 I started this project because I wanted to broaden my knowledge on embedded systems through making a project that combines wide range of concepts from automotive CAN-bus and OBD-II protocol through RTOS and embedded C all the way to BLE notifications and custom mobile app. I was also very interested in hardware part because I feel like I do not get enough experience with that in university.
 
-## Architecture
+## System Architecture
 ### Hardware
 Version 1 of this project is made by soldering components to protoboard and not yet on custom PCB, though, that is planned in very near future.
 Therefore, components needed for this version are:
@@ -53,8 +53,22 @@ User is presented with virtual (car) dashboard consisting of:
 * Speedometer
 * Pedal position gauge
 * Torque meter
+* Coolant temperature gauge
 
 #### Engine sound synthesis
 Most interesting feature of brzee app in my opinion is the **live supercar engine sound**.
 While app displays some of live data, it also uses it to produce supercar sounding engine sounds that can be played through car speakers and give user a feeling of driving their dream car. There are of course different sound options available for user to choose.
 Normal daily driver cars don't usually have same rpm limits as most of supercars. That's why brzee continuously learns and conforms ranges to the driven car so the user can experience the full power of supercars.
+
+## Engineering challenges
+### Not all cars have CAN bus
+When I went to test the first brzee firmware version on my car I could not manage to get it to detect the right bitrate (which was the first thing it should do).
+I inspected the code and reassembled all components but got no more lucky.
+Well, the reason was that I was testing on my 2008 VW Polo which still used K-line instead of CAN bus.
+After the discovery, I made the decision to continue developing the system for CAN and test on other cars, because I wanted to learn the protocol that is currently most widely used worldwide in automotive industry.
+
+### Sometimes you aren't the problem (or are you? :)
+After everything was connected and working while connected to my laptop and it was time to do the last step and get the power directly from the cars 16V supply I encountered another problem. I can't use cars voltage because it would fry the chip, so I connected it through step-down converter that should convert the voltage down to 5V. I've set it up in the lab and measured the output voltage to be correct, but when I connected it to the car and the controller it wouldn't turn on.
+My first thought was that I've let through too much voltage and fried the chip, but it worked again when i connected it to the laptop's power. Then I thought that other components have excessive resistance, but after measuring it in lab again connected to the whole system the voltage was still to low for it to work.
+Then it hit me: It may just be a faulty converter. I tested another converter of the same model and it worked immediately.
+My guess is that I might have damaged the component when i was soldering on wires with grandpa's gigantic soldering iron (because I didn't have access to anything more practical yet at that time.
