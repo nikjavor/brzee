@@ -20,7 +20,7 @@ Therefore, components needed for this version are:
 
 Exact wiring of components is shown on schema below:
 <p align="center">
-  <img width="1586" height="907" alt="Components wiring diagram<" src="https://github.com/user-attachments/assets/5b31004f-bbcf-449f-bf16-fc971cfc3d6d" />
+  <img width="1586" height="907" alt="61F097F7-EA86-4821-9020-1CAB6F07F81C" src="https://github.com/user-attachments/assets/b0e4d349-967f-4ace-b76e-73ee8186933f" />
   <em>Components wiring diagram</em>
 </p>
 
