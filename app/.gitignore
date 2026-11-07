@@ -1,0 +1,13 @@
+node_modules/
+.expo/
+dist/
+build/
+coverage/
+*.log
+.DS_Store
+ios/
+android/
+.worktrees/
+.superpowers/
+.env*
+!.env.example
