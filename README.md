@@ -16,7 +16,7 @@ I started this project because I wanted to broaden my knowledge on embedded syst
 
 ## System Architecture
 ### Hardware
-Version 1 of this project is made by soldering components to protoboard and not yet on custom PCB, though, that is planned in very near future.
+Version 1 of this project is made by placing components to breadboard and not yet on custom PCB, though, that is planned in very near future.
 Therefore, components needed for this version are:
 * [XIAO ESP32-C6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/) microcontroller
 * SN65HVD230 CAN transceiver
@@ -30,8 +30,10 @@ Exact wiring of components is shown on schema below:
 </p>
 
 <p align="center">
-  SLIKA VEZJA TODO
-  <!-- <img width="1586" height="907" alt="Actual wiring of my version" src="https://github.com/user-attachments/assets/5b31004f-bbcf-449f-bf16-fc971cfc3d6d" /> -->
+  <img width="40%" alt="IMG_7398 Large" src="https://github.com/user-attachments/assets/885d36af-c20d-4068-90cb-9c1a25153b9f" />
+  <img width="40%" alt="IMG_7400 Large" src="https://github.com/user-attachments/assets/bf3ef1a2-b735-4e2a-83be-4ec353da2179" />
+</p>
+<p align="center">
   <em>Actual wiring of my version</em>
 </p>
 
