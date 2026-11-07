@@ -1,7 +1,12 @@
 # brzee
 A hardware–software system that transforms live vehicle telemetry into responsive, synthesized engine audio.
 
-PROSTOR ZA SLIKE TODO
+<p align="center">
+  <img src="app/docs/images/brzee-idle-ios.png" width="240" alt="BRZEE dashboard at warm idle" />
+  <img src="app/docs/images/brzee-city-ios.png" width="240" alt="BRZEE dashboard during city driving" />
+  <img src="app/docs/images/brzee-cruise-ios.png" width="240" alt="BRZEE dashboard while cruising" />
+</p>
+<p align="center"><em>Brzee app showing live vehicle data</em></p>
 
 ## Project Overview
 brzee is real-time automotive system which gets live car data from OBD-II port using custom adapter containing ESP32-C6 microcontroller and CAN transceiver. Data is polled and gets sent to the phone via Bluetooth Low Energy notifications. Mobile application displays received data and synthesizes supercar-sounding engine sound conforming to live data.
