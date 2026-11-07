@@ -17,7 +17,7 @@
 #include "services/gatt/ble_svc_gatt.h"
 
 static const char *TAG = "BLE";
-static const char DEVICE_NAME[] = "BRZI";
+static const char DEVICE_NAME[] = "BRZEE";
 
 // f023e430-7ac9-4f6d-a40a-5a43b9181a01; NimBLE uses least-significant byte first.
 static const ble_uuid128_t s_service_uuid = BLE_UUID128_INIT(
@@ -72,7 +72,7 @@ static void advertise(void)
     if (s_connection != BLE_HS_CONN_HANDLE_NONE || ble_gap_adv_active())
         return;
 
-    // Flags + 128-bit service UUID + name occupy 27 of the available 31 bytes.
+    // Flags + 128-bit service UUID + name occupy 28 of the available 31 bytes.
     const struct ble_hs_adv_fields fields = {
         .flags = BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP,
         .name = (const uint8_t *)DEVICE_NAME,

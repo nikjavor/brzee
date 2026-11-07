@@ -83,7 +83,7 @@ esp_err_t twai_node_transmit_wait_all_done(twai_node_handle_t, int);
 esp_err_t twai_node_receive_from_isr(twai_node_handle_t, twai_frame_t *);
 '''
 
-with tempfile.TemporaryDirectory(prefix='brzi-tests-') as folder:
+with tempfile.TemporaryDirectory(prefix='brzee-tests-') as folder:
     folder = Path(folder)
     (folder / 'test_sdk.h').write_text(SDK)
     for header in ['freertos/FreeRTOS.h', 'freertos/queue.h', 'freertos/task.h',

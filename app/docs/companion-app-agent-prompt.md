@@ -17,7 +17,7 @@ Use the sketch as a layout and interaction reference. You may refine proportions
 The hardware and communication contract are already implemented:
 
 - The controller is an ESP32-C6 that queries vehicle data using OBD-II Mode 01 over 11-bit classic CAN. The phone receives decoded telemetry over Bluetooth Low Energy. It does not talk directly to the vehicle's CAN bus or use an ELM327 text-command interface.
-- The product is called BRZEE in this brief/sketch, but the current firmware advertises the exact name `BRZI`. Keep the branding separate from the discovery identifier and confirm the final visible spelling with me.
+- The product is called BRZEE, and the firmware advertises the exact name `BRZEE`.
 - BLE service UUID: `f023e430-7ac9-4f6d-a40a-5a43b9181a01`.
 - Telemetry characteristic UUID: `f023e430-7ac9-4f6d-a40a-5a43b9181a02`.
 - Discover by service UUID, connect, discover the notify-only characteristic, and enable its notifications. There is no application telemetry read/write command. Use the platform or BLE library's notification-subscription API; it must enable the standard CCCD (`2902`, notification value `01 00`) as appropriate.

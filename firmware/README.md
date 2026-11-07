@@ -1,4 +1,4 @@
-# BRZI
+# BRZEE
 
 ESP32-C6 OBD2 dashboard data collector, using 11-bit classic CAN and Mode 01.
 
@@ -79,7 +79,7 @@ No derived value is fabricated when its input PIDs are unavailable.
 
 ## BLE live telemetry
 
-The device advertises as `BRZI` and accepts one phone without pairing. Subscribe
+The device advertises as `BRZEE` and accepts one phone without pairing. Subscribe
 to its telemetry characteristic to receive all 35 readings immediately, then every
 100 ms. Values stay in the controller's integer units and include validity and
 sample age. At ATT MTU 247, each complete snapshot uses one 224-byte notification;

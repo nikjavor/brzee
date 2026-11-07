@@ -49,7 +49,7 @@ int ble_npl_callout_reset(struct ble_npl_callout *timer, uint32_t delay) {
 uint32_t ble_npl_time_ms_to_ticks32(uint32_t ms) { return pdMS_TO_TICKS(ms); }
 void ble_svc_gap_init(void) {}
 void ble_svc_gatt_init(void) {}
-int ble_svc_gap_device_name_set(const char *name) { assert(strcmp(name, "BRZI") == 0); return 0; }
+int ble_svc_gap_device_name_set(const char *name) { assert(strcmp(name, "BRZEE") == 0); return 0; }
 int ble_gatts_count_cfg(const struct ble_gatt_svc_def *services) { return gatt_result; }
 int ble_gatts_add_svcs(const struct ble_gatt_svc_def *services) {
     assert(services[0].characteristics[0].flags == BLE_GATT_CHR_F_NOTIFY);
@@ -58,7 +58,7 @@ int ble_gatts_add_svcs(const struct ble_gatt_svc_def *services) {
 }
 int ble_gap_adv_active(void) { return advertising; }
 int ble_gap_adv_set_fields(const struct ble_hs_adv_fields *fields) {
-    assert(fields->name_len == 4 && memcmp(fields->name, "BRZI", 4) == 0);
+    assert(fields->name_len == 5 && memcmp(fields->name, "BRZEE", 5) == 0);
     assert(fields->num_uuids128 == 1 && fields->uuids128_is_complete);
     assert(fields->uuids128 == &s_service_uuid);
     return 0;

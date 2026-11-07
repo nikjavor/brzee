@@ -1,6 +1,6 @@
-# BRZI BLE telemetry, version 1
+# BRZEE BLE telemetry, version 1
 
-BRZI publishes a complete snapshot of 35 readings immediately after subscription,
+BRZEE publishes a complete snapshot of 35 readings immediately after subscription,
 then every 100 ms. Each reading is the latest available OBD or derived value;
 BLE does not change the OBD polling intervals. A slow ECU can update less often
 than the stream. Snapshot timestamps describe controller uptime, not UTC.
@@ -9,7 +9,7 @@ than the stream. Snapshot timestamps describe controller uptime, not UTC.
 
 | Item | Value |
 | --- | --- |
-| Advertised name | `BRZI` |
+| Advertised name | `BRZEE` |
 | Primary service UUID | `f023e430-7ac9-4f6d-a40a-5a43b9181a01` |
 | Telemetry characteristic UUID | `f023e430-7ac9-4f6d-a40a-5a43b9181a02` |
 | Characteristic properties | Notify |
@@ -196,8 +196,8 @@ existing configuration. For a new checkout, select `esp32c6` with
 A separate build can verify the tracked defaults without replacing local settings:
 
 ```sh
-idf.py -B /tmp/brzi-ble-clean-build -DIDF_TARGET=esp32c6 \
-  -DSDKCONFIG=/tmp/brzi-ble-clean-sdkconfig build
+idf.py -B /tmp/brzee-ble-clean-build -DIDF_TARGET=esp32c6 \
+  -DSDKCONFIG=/tmp/brzee-ble-clean-sdkconfig build
 python3 tests/run_host_tests.py
 ```
 

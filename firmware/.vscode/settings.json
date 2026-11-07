@@ -31,7 +31,7 @@
   "clangd.arguments": [
     "--background-index",
     "--query-driver=**",
-    "--compile-commands-dir=/Users/nikjavor/repos/brzi/build"
+    "--compile-commands-dir=/Users/nikjavor/repos/brzee/build"
   ],
   "idf.flashType": "UART"
 }
