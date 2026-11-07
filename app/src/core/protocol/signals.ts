@@ -1,0 +1,42 @@
+import { SignalId } from "./types";
+// Index is the wire ID. Scale only at the presentation boundary; raw values stay signed.
+export const signals = [
+  ["Engine RPM", "rpm", 1],
+  ["Vehicle speed", "km/h", 1],
+  ["Coolant", "°C", 1],
+  ["Throttle position", "%", 1],
+  ["Engine load", "%", 1],
+  ["Fuel level", "%", 1],
+  ["Barometric pressure", "kPa", 1],
+  ["Supply voltage", "V", 1000],
+  ["Relative throttle", "%", 1],
+  ["Ambient temperature", "°C", 1],
+  ["Commanded throttle", "%", 1],
+  ["Oil temperature", "°C", 1],
+  ["Intake manifold pressure", "kPa", 1],
+  ["Intake air temperature", "°C", 1],
+  ["Mass airflow", "g/s", 1000],
+  ["Fuel rate", "L/h", 1000],
+  ["Pedal D", "%", 1],
+  ["Pedal E", "%", 1],
+  ["Pedal F", "%", 1],
+  ["Relative pedal", "%", 1],
+  ["Throttle B", "%", 1],
+  ["Throttle C", "%", 1],
+  ["Short fuel trim bank 1", "%", 100],
+  ["Long fuel trim bank 1", "%", 100],
+  ["Short fuel trim bank 2", "%", 100],
+  ["Long fuel trim bank 2", "%", 100],
+  ["Engine run time", "s", 1],
+  ["Ignition timing", "°", 10],
+  ["Demanded torque", "%", 1],
+  ["Actual torque", "%", 1],
+  ["Reference torque", "Nm", 1],
+  ["Fuel rail gauge pressure", "kPa", 1],
+  ["Boost pressure", "kPa", 1],
+  ["Fuel consumption", "L/100 km", 1000],
+  ["Actual torque", "Nm", 1],
+] as const;
+export function displayValue(id: SignalId, raw: number): number {
+  return raw / signals[id][2];
+}

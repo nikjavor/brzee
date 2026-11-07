@@ -1,0 +1,209 @@
+--- a/components/obd_scheduler/obd_scheduler.c
++++ b/components/obd_scheduler/obd_scheduler.c
+@@ -34,8 +34,8 @@
+     JOB(OBD_SIGNAL_AMBIENT_TEMPERATURE, 5000, PID_PRIO_SLOW),
+     JOB(OBD_SIGNAL_RELATIVE_THROTTLE_POSITION, 1000, PID_PRIO_MEDIUM),
+     JOB(OBD_SIGNAL_THROTTLE_ACTUATOR, 1000, PID_PRIO_MEDIUM),
+-    JOB(OBD_SIGNAL_PEDAL_POSITION_E, 1000, PID_PRIO_SLOW),
+-    JOB(OBD_SIGNAL_PEDAL_POSITION_F, 1000, PID_PRIO_SLOW),
++    JOB(OBD_SIGNAL_PEDAL_POSITION_E, 250, PID_PRIO_FAST),
++    JOB(OBD_SIGNAL_PEDAL_POSITION_F, 250, PID_PRIO_FAST),
+     JOB(OBD_SIGNAL_THROTTLE_POSITION_B, 1000, PID_PRIO_SLOW),
+     JOB(OBD_SIGNAL_THROTTLE_POSITION_C, 1000, PID_PRIO_SLOW),
+     JOB(OBD_SIGNAL_SHORT_FUEL_TRIM_BANK_1, 1000, PID_PRIO_MEDIUM),
+@@ -111,9 +111,14 @@
+     if (!job->enabled || (int32_t)(now_ms - job->next_due_ms) < 0)
+       continue;
+ 
+-    // Service the oldest deadline so slow signals get a turn, too.
+-    if (best == NULL || (int32_t)(job->next_due_ms - best->next_due_ms) < 0 ||
+-        (job->next_due_ms == best->next_due_ms && job->priority < best->priority))
++    // An overdue auxiliary PID must not delay the inputs that drive sound.
++    // Keep oldest-deadline fairness inside the fast class and among auxiliaries.
++    bool fast = job->priority == PID_PRIO_FAST;
++    bool best_fast = best != NULL && best->priority == PID_PRIO_FAST;
++    if (best == NULL || (fast && !best_fast) ||
++        (fast == best_fast &&
++         ((int32_t)(job->next_due_ms - best->next_due_ms) < 0 ||
++          (job->next_due_ms == best->next_due_ms && job->priority < best->priority))))
+       best = job;
+   }
+   return best;
+@@ -218,12 +223,26 @@
+     }
+     if (!res)
+     {
+-      car_data_invalidate(signal_data_ids[job->signal]);
++      // A failed request is not a new measurement. Retain any last successful
++      // value with its ORIGINAL timestamp; consumers still expire it by age.
++      // Unsupported and never-received signals remain invalid.
+       if (job->fail_count < UINT8_MAX)
+         job->fail_count++;
+       ESP_LOGW(TAG, "%s query failed (fail_count=%u)",
+                obd_signal_get_info(job->signal)->name, job->fail_count);
+-      job->next_due_ms = now + job->period_ms + (job->fail_count * 50u);
++      car_value_t previous;
++      uint32_t retry_ms = job->period_ms;
++      if (!car_data_get_full(signal_data_ids[job->signal], &previous))
++      {
++        // A partial capability scan can leave unsupported PIDs unknown. Probe
++        // those less often instead of spending the live-input budget on them.
++        unsigned shift = job->fail_count < 6u ? job->fail_count : 6u;
++        retry_ms <<= shift;
++        uint32_t cap_ms = job->period_ms > 10000u ? job->period_ms : 10000u;
++        if (retry_ms > cap_ms)
++          retry_ms = cap_ms;
++      }
++      job->next_due_ms = now + retry_ms;
+     }
+ 
+     vTaskDelay(pdMS_TO_TICKS(10));
+--- a/tests/test_obd.c
++++ b/tests/test_obd.c
+@@ -63,6 +63,9 @@
+ static twai_rx_item_t queue_items[32];
+ static twai_frame_t incoming;
+ static jmp_buf scheduler_exit;
++static unsigned request_count[OBD_SIGNAL_COUNT];
++static uint32_t request_times[OBD_SIGNAL_COUNT][2048];
++static unsigned drop_mode;
+ 
+ TickType_t xTaskGetTickCount(void) { return ticks; }
+ void vTaskDelay(TickType_t delay) {
+@@ -125,6 +128,12 @@
+         for (unsigned i = 0; i < sizeof(samples) / sizeof(samples[0]); i++) {
+             const sample_t *s = &samples[i];
+             if (s->pid != pid) continue;
++            unsigned count = request_count[s->signal]++;
++            assert(count < 2048);
++            request_times[s->signal][count] = pdTICKS_TO_MS(ticks);
++            if ((drop_mode == 1 && s->signal == OBD_SIGNAL_RPM && count > 0) ||
++                (drop_mode == 2 && s->signal != OBD_SIGNAL_RPM) || drop_mode == 3)
++                break;
+             uint8_t data[8] = {(uint8_t)(s->bytes + 2), 0x41, pid, s->a, s->b};
+             inject(0, data, 8);
+             break;
+@@ -257,10 +266,108 @@
+     apply_signal_support();
+     for (unsigned i = 0; i < OBD_SIGNAL_COUNT; i++) assert(!pid_jobs[i].enabled);
+ }
++static void setup_timing_fixture(void) {
++    ticks = 100; // 1000 ms; keep assertions independent of discovery duration.
++    head = tail = 0;
++    memset(request_count, 0, sizeof(request_count));
++    memset(s_supported_pids, 0, sizeof(s_supported_pids));
++    memset(s_support_page_known, 0, sizeof(s_support_page_known));
++    for (unsigned page = 0; page < 4; page++) {
++        s_supported_pids[0][page] = UINT32_MAX;
++        s_support_page_known[0][page] = true;
++    }
++    for (unsigned i = 0; i < OBD_SIGNAL_COUNT; i++) {
++        pid_jobs[i].enabled = false;
++        pid_jobs[i].next_due_ms = 0;
++        pid_jobs[i].last_success_ms = 0;
++        pid_jobs[i].fail_count = 0;
++    }
++    drop_mode = 0;
++    car_data_init();
++}
++static void run_timing_fixture(unsigned duration_ms) {
++    stop_ticks = ticks + pdMS_TO_TICKS(duration_ms);
++    stop_scheduler = true;
++    if (setjmp(scheduler_exit) == 0) scheduler_task(NULL);
++    stop_scheduler = false;
++}
++static void test_transient_query_failure_keeps_original_sample_timestamp(void) {
++    setup_timing_fixture();
++    pid_jobs[0].enabled = true; // RPM, the first job.
++    drop_mode = 1;
++    run_timing_fixture(160);
++    assert(request_count[OBD_SIGNAL_RPM] == 2);
++    car_value_t value;
++    assert(car_data_get_full(CAR_DATA_RPM, &value));
++    assert(value.value == 1000 && value.timestamp_ms == 1000);
++    assert(pdTICKS_TO_MS(ticks) - value.timestamp_ms == 160);
++    // No first successful sample means there is nothing to retain.
++    setup_timing_fixture();
++    pid_jobs[0].enabled = true;
++    drop_mode = 3;
++    run_timing_fixture(60);
++    assert(!car_data_get_full(CAR_DATA_RPM, &value));
++}
++static void test_each_pedal_channel_updates_without_one_second_steps(void) {
++    const obd_signal_t signals[] = {OBD_SIGNAL_PEDAL_POSITION_E, OBD_SIGNAL_PEDAL_POSITION_F};
++    for (unsigned index = 0; index < 2; index++) {
++        obd_signal_t signal = signals[index];
++        setup_timing_fixture();
++        for (unsigned i = 0; i < OBD_SIGNAL_COUNT; i++)
++            pid_jobs[i].enabled = pid_jobs[i].signal == signal;
++        run_timing_fixture(3000);
++        assert(request_count[signal] >= 8);
++        for (unsigned i = 1; i < request_count[signal]; i++)
++            assert(request_times[signal][i] - request_times[signal][i - 1] <= 350);
++    }
++}
++static void test_missing_auxiliary_pids_cannot_starve_rpm(void) {
++    setup_timing_fixture();
++    for (unsigned i = 0; i < OBD_SIGNAL_COUNT; i++) pid_jobs[i].enabled = true;
++    drop_mode = 2; // RPM responds immediately; every other PID consumes its timeout.
++    run_timing_fixture(5000);
++    unsigned count = request_count[OBD_SIGNAL_RPM];
++    assert(count > 2);
++    uint32_t maximum_gap = 0;
++    for (unsigned i = 1; i < count; i++) {
++        uint32_t gap = request_times[OBD_SIGNAL_RPM][i] - request_times[OBD_SIGNAL_RPM][i - 1];
++        if (gap > maximum_gap) maximum_gap = gap;
++    }
++    fprintf(stderr, "RPM maximum gap with nonresponding auxiliary PIDs: %u ms\n", maximum_gap);
++    assert(maximum_gap <= 400); // Leave margin before the phone's 500 ms expiry.
++}
++static void test_nonresponding_pedal_probes_back_off(void) {
++    setup_timing_fixture();
++    for (unsigned i = 0; i < OBD_SIGNAL_COUNT; i++)
++        pid_jobs[i].enabled = pid_jobs[i].signal == OBD_SIGNAL_RPM || pid_jobs[i].signal == OBD_SIGNAL_PEDAL_POSITION_F;
++    drop_mode = 2;
++    run_timing_fixture(10000);
++    fprintf(stderr, "Unanswered pedal-F probes in 10 seconds: %u\n", request_count[OBD_SIGNAL_PEDAL_POSITION_F]);
++    assert(request_count[OBD_SIGNAL_PEDAL_POSITION_F] <= 5);
++    car_value_t value;
++    assert(!car_data_get_full(CAR_DATA_PEDAL_POSITION_F_PCT, &value));
++    assert(request_count[OBD_SIGNAL_RPM] >= 50);
++}
++static void test_probe_backoff_never_shortens_a_long_poll_interval(void) {
++    setup_timing_fixture();
++    for (unsigned i = 0; i < OBD_SIGNAL_COUNT; i++)
++        pid_jobs[i].enabled = pid_jobs[i].signal == OBD_SIGNAL_RPM || pid_jobs[i].signal == OBD_SIGNAL_REFERENCE_TORQUE;
++    drop_mode = 2;
++    run_timing_fixture(65000);
++    unsigned count = request_count[OBD_SIGNAL_REFERENCE_TORQUE];
++    assert(count >= 2);
++    for (unsigned i = 1; i < count; i++)
++        assert(request_times[OBD_SIGNAL_REFERENCE_TORQUE][i] - request_times[OBD_SIGNAL_REFERENCE_TORQUE][i - 1] >= 30000);
++}
+ int main(void) {
+     test_decoders();
+     test_car_data();
+     test_discovery();
+     test_scheduler();
++    test_transient_query_failure_keeps_original_sample_timestamp();
++    test_each_pedal_channel_updates_without_one_second_steps();
++    test_missing_auxiliary_pids_cannot_starve_rpm();
++    test_nonresponding_pedal_probes_back_off();
++    test_probe_backoff_never_shortens_a_long_poll_interval();
+     puts("PASS: 32 decoders, signed/scaled storage, derived values, multi-ECU discovery, timeout retry and 40s scheduler simulation.");
+ }
+--- a/docs/ble-protocol.md
++++ b/docs/ble-protocol.md
+@@ -85,6 +85,12 @@
+ 49.7 days. Refresh-derived-value rules and scheduler invalidation remain the
+ controller's responsibility. BLE preserves validity rather than applying another
+ staleness policy to individual signals.
++
++A transient failed OBD query retains the last successful value with its original
++timestamp. A failed query never refreshes that sample's age. Never-received and
++explicitly unsupported signals remain invalid; consumers must still expire
++retained readings using their sample ages. All pedal D/E/F/relative channels now
++use a 250 ms minimum polling interval, subject to ECU response and scheduling.
+ 
+ The record order is fixed by the following IDs, independent of the layout of
+ C structs. Adding, removing, or changing records or units requires a new protocol
