@@ -77,7 +77,7 @@ No patched leaf release was published in the checked registry. Audit proposes in
 
 Pedal D and E returned samples in the physical trace; full pedal travel/calibration remains unverified. No source RPM metadata or human listening signoff has been obtained. No input-to-AUX latency, long-running background delivery, thermal/memory result or real call/unplug behavior has been measured. Follow [device acceptance](device-acceptance.md) and [audio calibration](audio-calibration.md) before calling the app physically accepted.
 
-Native screenshots: [iOS Demo](images/brzee-demo-ios.png), [Android Demo](images/brzee-demo-android.png). These show simulated telemetry. Emulator headphone-switch events did not provide a usable output-device route test; real unplug behavior remains pending.
+Native screenshots: [iOS Demo](../../images/brzee-cruise-ios.png). These show simulated telemetry. Emulator headphone-switch events did not provide a usable output-device route test; real unplug behavior remains pending.
 
 
 ## Field update — 2026-10-27

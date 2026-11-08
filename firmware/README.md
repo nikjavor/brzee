@@ -29,7 +29,7 @@ completion; actual refresh rates depend on ECU response time and other jobs.
 | 46 | Ambient air temperature | C, signed | 5 s |
 | 47 / 48 | Throttle position sensors B / C | % | 1 s |
 | 49 | Accelerator pedal position D | % | 250 ms |
-| 4A / 4B | Accelerator pedal position E / F | % | 1 s |
+| 4A / 4B | Accelerator pedal position E / F | % | 250 ms |
 | 4C | Commanded throttle actuator | % | 1 s |
 | 5A | Relative accelerator pedal position | % | 250 ms |
 | 5C | Engine oil temperature | C, signed | 1 s |
@@ -52,12 +52,20 @@ not battery state of charge.
 On startup, support pages `00`, `20`, `40`, and `60` are queried. Bitmaps are kept
 separately for responders `7E8`–`7EF`. Signals confirmed unsupported are skipped.
 A missing response leaves support unknown, so the signal can still be tried;
-incomplete capability discovery retries every ten seconds. Failed live queries
-invalidate that reading and back off before retrying.
+incomplete capability discovery retries every ten seconds. A failed live query
+retains any last successful value with its original timestamp; it does not make
+the reading fresh again. Consumers must expire retained readings using their
+sample ages. Never-received and confirmed unsupported signals remain invalid.
+Signals without a successful reading use increasing retry delays, capped at ten
+seconds or their normal polling interval if longer. Previously received signals
+retry at their normal interval.
 
 The serial monitor prints enabled signals, integer units, and reading ages every
-second. `N/A` means a reading is not currently valid. Under load the scheduler
-services the oldest overdue request first, with priority breaking ties.
+second. `N/A` means a reading is not currently valid; retained readings can still
+be valid while their ages increase. Under load, overdue fast signals (RPM, speed,
+and accelerator pedal channels) take precedence over auxiliary signals. Within
+the fast group and within the auxiliary group, the oldest due request runs first,
+with priority breaking ties.
 
 Access values through `car_data_get()`, `car_data_get_full()`, or
 `car_data_get_snapshot()`. The snapshot exposes named fields under `car.engine`.

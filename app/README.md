@@ -42,7 +42,7 @@ A physical iPhone needs a signed device Release build. For Android local builds,
 
 ## Dashboard screenshots
 
-[Idle](docs/images/brzee-idle-ios.png) · [City driving](docs/images/brzee-city-ios.png) · [Cruising](docs/images/brzee-cruise-ios.png)
+[Idle](../images/brzee-idle-ios.png) · [City driving](../images/brzee-city-ios.png) · [Cruising](../images/brzee-cruise-ios.png)
 
 These are native iPhone simulator captures of the real dashboard with representative telemetry, not measurements from a physical car. The separate `tests/screenshots/entry.tsx` feeds protocol-v1 notification bytes through the production BLE session, decoder, store and dashboard. It uses an in-memory vehicle and silent audio backend, so captures cannot modify saved car calibration or play engine audio. The normal `index.ts` never imports it. See [capture instructions](tests/screenshots/README.md).
 

@@ -1,13 +1,6 @@
 # brzee
 A hardware–software system that transforms live vehicle telemetry into responsive, synthesized engine audio.
 
-<p align="center">
-  <img src="app/docs/images/brzee-idle-ios.png" width="240" alt="BRZEE dashboard at warm idle" />
-  <img src="app/docs/images/brzee-city-ios.png" width="240" alt="BRZEE dashboard during city driving" />
-  <img src="app/docs/images/brzee-cruise-ios.png" width="240" alt="BRZEE dashboard while cruising" />
-</p>
-<p align="center"><em>Brzee app showing live vehicle data</em></p>
-
 ## Project Overview
 brzee is real-time automotive system which gets live car data from OBD-II port using custom adapter containing ESP32-C6 microcontroller and CAN transceiver. Data is polled and gets sent to the phone via Bluetooth Low Energy notifications. Mobile application displays received data and synthesizes supercar-sounding engine sound conforming to live data.
 
@@ -25,13 +18,15 @@ Therefore, components needed for this version are:
 
 Exact wiring of components is shown on schema below:
 <p align="center">
-  <img width="1586" height="907" alt="61F097F7-EA86-4821-9020-1CAB6F07F81C" src="https://github.com/user-attachments/assets/b0e4d349-967f-4ace-b76e-73ee8186933f" />
+  <img src="images/wiring-diagram.PNG" alt="Brzee adapter wiring diagram" />
   <em>Components wiring diagram</em>
 </p>
 
+<br />
+
 <p align="center">
-  <img width="40%" alt="IMG_7398 Large" src="https://github.com/user-attachments/assets/885d36af-c20d-4068-90cb-9c1a25153b9f" />
-  <img width="40%" alt="IMG_7400 Large" src="https://github.com/user-attachments/assets/bf3ef1a2-b735-4e2a-83be-4ec353da2179" />
+  <img src="images/wiring1.jpeg" width="40%" alt="Brzee adapter wiring" />
+  <img src="images/wiring2.jpeg" width="40%" alt="Brzee adapter wiring" />
 </p>
 <p align="center">
   <em>Actual wiring of my version</em>
@@ -53,6 +48,7 @@ As it's name suggest, this component decides how often and when exactly each par
 When connection with the phone is established, car's live data gets periodically sent to the phone using BLE's notifications.
 
 ### Mobile app
+
 Second half of the brzee project is its companion mobile app. It connects to brzee car adapter and interprets the received information.
 When user opens the app they are met with connection button which (when pressed) automatically connects the app to adapter and starts receiving information via Bluetooth Low Energy protocol.
 User is presented with virtual (car) dashboard consisting of:
@@ -66,6 +62,13 @@ User is presented with virtual (car) dashboard consisting of:
 Most interesting feature of brzee app in my opinion is the **live supercar engine sound**.
 While app displays some of live data, it also uses it to produce supercar sounding engine sounds that can be played through car speakers and give user a feeling of driving their dream car. There are of course different sound options available for user to choose.
 Normal daily driver cars don't usually have same rpm limits as most of supercars. That's why brzee continuously learns and conforms ranges to the driven car so the user can experience the full power of supercars.
+
+<p align="center">
+  <img src="images/brzee-idle-ios.png" width="240" alt="BRZEE dashboard at warm idle" />
+  <img src="images/brzee-cruise-ios.png" width="240" alt="BRZEE dashboard while cruising" />
+  <img src="images/brzee-connect-ios.png" width="240" alt="BRZEE dashboard before connection" />
+</p>
+<p align="center"><em>Brzee app showing live vehicle data</em></p>
 
 ## Engineering challenges
 ### Not all cars have CAN bus
