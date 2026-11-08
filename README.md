@@ -70,6 +70,8 @@ Normal daily driver cars don't usually have same rpm limits as most of supercars
 </p>
 <p align="center"><em>Brzee app showing live vehicle data</em></p>
 
+Currently the app was only tested on iOS.
+
 ## Engineering challenges
 ### Not all cars have CAN bus
 When I went to test the first brzee firmware version on my car I could not manage to get it to detect the right bitrate (which was the first thing it should do).

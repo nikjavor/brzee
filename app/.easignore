@@ -3,8 +3,9 @@ node_modules/
 .DS_Store
 .env*
 !.env.example
-ios/
-android/
+# Generate app projects during the build; include native modules under modules/.
+/ios
+/android
 .agents/
 .expo/
 .superpowers/

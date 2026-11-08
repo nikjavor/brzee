@@ -5,8 +5,9 @@ build/
 coverage/
 *.log
 .DS_Store
-ios/
-android/
+# Generated app projects; keep native modules under modules/ included.
+/ios
+/android
 .worktrees/
 .superpowers/
 .env*
